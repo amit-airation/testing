@@ -45,13 +45,16 @@
     }
 
     .invoice {
-      width: 764px;
+      width: 210mm;
+      min-height: 297mm;
       max-width: 100%;
       background: #fff;
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 40px 42px 32px;
-      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+      border-radius: 2px;
+      padding: 16mm 16mm 14mm;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
     }
 
     /* Header */
@@ -317,7 +320,7 @@
     }
 
     .footer {
-      margin-top: 36px;
+      margin-top: auto;
       padding-top: 18px;
       border-top: 1px solid #eef0f3;
       text-align: center;
@@ -325,15 +328,26 @@
       color: #94a3b8;
     }
 
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
     @media print {
-      body {
+      html, body {
+        width: 210mm;
+        height: 297mm;
         background: #fff;
         padding: 0;
       }
       .invoice {
+        width: 210mm;
+        min-height: 297mm;
+        height: 297mm;
+        max-width: none;
         box-shadow: none;
         border: 0;
-        width: 100%;
+        border-radius: 0;
       }
     }
   </style>
