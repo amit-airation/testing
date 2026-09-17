@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hirance test — Events</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <h1>Webhook events</h1>
+        <p>Every job webhook stores elapsed milliseconds for the active round: current time minus start time.</p>
+      </div>
+    </header>
+
+    <nav id="nav" class="tabs"></nav>
+
+    <section class="keys">
+      <div>
+        <label for="adminKey">Admin API key</label>
+        <input id="adminKey" type="password" autocomplete="off" />
+      </div>
+      <div>
+        <label for="webhookSecret">Webhook secret</label>
+        <input id="webhookSecret" type="password" autocomplete="off" />
+      </div>
+      <div>
+        <label for="roundId">Round</label>
+        <select id="roundId" data-round-id></select>
+      </div>
+      <div class="actions" style="align-items: end;">
+        <button class="primary" id="refresh" type="button">Refresh events</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Stored webhook calls</h2>
+      <div id="events"></div>
+    </section>
+
+    <section class="log">
+      <h2 id="logTitle">API log</h2>
+      <pre id="logBody">Select a round to inspect stored elapsed times.</pre>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+  <script>
+    const T = window.HiranceTest;
+    T.renderNav('events.html');
+    T.loadKeys();
+
+    async function refresh() {
+      await T.loadRoundsInto('roundId');
+      const roundId = T.currentRoundId();
+      const events = await T.adminGet(`/admin/rounds/${roundId}/events`);
+      const list = Array.isArray(events) ? events : [];
+      T.$('events').innerHTML = list.length
+        ? `<table>
+            <thead><tr><th>ID</th><th>Job</th><th>Company</th><th>Status</th><th>Elapsed</th><th>When</th></tr></thead>
+            <tbody>${list.map((event) => `
+              <tr>
+                <td>#${event.id}</td>
+                <td>${event.jobKey}</td>
+                <td>${event.companyId}</td>
+                <td>${T.badge(event.status)}</td>
+                <td>${T.formatMs(event.elapsedMs)} (${event.elapsedMs} ms)</td>
+                <td>${event.createdAt}</td>
+              </tr>`).join('')}</tbody>
+          </table>`
+        : '<p class="empty">No webhook events stored for this round yet.</p>';
+    }
+
+    T.$('roundId').addEventListener('change', (event) => {
+      T.setRoundId(event.target.value);
+      refresh().catch((error) => T.showLog('Error', error.message));
+    });
+    T.$('refresh').addEventListener('click', () => refresh().catch((error) => T.showLog('Error', error.message)));
+    refresh().catch((error) => T.showLog('Error', error.message));
+  </script>
+</body>
+</html>

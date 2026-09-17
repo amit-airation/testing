@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hirance test — Webhook</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <h1>Job webhook</h1>
+        <p>Simulate a job create/publish event. Elapsed time is stored as now minus the active round’s start time.</p>
+      </div>
+    </header>
+
+    <nav id="nav" class="tabs"></nav>
+
+    <section class="keys">
+      <div>
+        <label for="adminKey">Admin API key</label>
+        <input id="adminKey" type="password" autocomplete="off" />
+      </div>
+      <div>
+        <label for="webhookSecret">Webhook secret</label>
+        <input id="webhookSecret" type="password" autocomplete="off" />
+      </div>
+      <div>
+        <label for="roundId">Round (for lookup)</label>
+        <select id="roundId" data-round-id></select>
+      </div>
+      <div class="actions" style="align-items: end;">
+        <button class="ghost" id="loadPeople" type="button">Load participants</button>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Send job event</h2>
+        <div class="row">
+          <div>
+            <label for="jobName">Job name</label>
+            <input id="jobName" value="Backend Engineer" />
+          </div>
+          <div>
+            <label for="jobId">Job id</label>
+            <input id="jobId" value="job-1001" />
+          </div>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <div>
+            <label for="companyId">Company id</label>
+            <input id="companyId" placeholder="must match a participant in the active round" />
+          </div>
+          <div>
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="create">create (10 pts)</option>
+              <option value="publish">publish (25 pts)</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="fillFromPerson" type="button">Use first participant</button>
+          <button class="primary" id="sendCreate" type="button">Send create</button>
+          <button class="ok" id="sendPublish" type="button">Send publish</button>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Participants in selected round</h2>
+        <div id="people" class="empty">Load participants, then send a webhook for one company id.</div>
+      </section>
+    </div>
+
+    <section class="log">
+      <h2 id="logTitle">API log</h2>
+      <pre id="logBody">Start the round first, then fire create and publish.</pre>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+  <script>
+    const T = window.HiranceTest;
+    T.renderNav('webhook.html');
+    T.loadKeys();
+    let people = [];
+
+    async function loadPeople() {
+      await T.loadRoundsInto('roundId');
+      const roundId = T.currentRoundId();
+      people = await T.adminGet(`/admin/rounds/${roundId}/participants`);
+      const list = Array.isArray(people) ? people : [];
+      T.$('people').innerHTML = list.length
+        ? `<table>
+            <thead><tr><th>Name</th><th>Company id</th><th></th></tr></thead>
+            <tbody>${list.map((person) => `
+              <tr>
+                <td>${person.name}</td>
+                <td>${person.companyId}</td>
+                <td><button class="ghost" data-company="${person.companyId}" type="button">Use</button></td>
+              </tr>`).join('')}</tbody>
+          </table>`
+        : '<p class="empty">No participants. Add one first.</p>';
+    }
+
+    async function send(status) {
+      T.$('status').value = status;
+      await T.request('/webhooks/jobs', {
+        method: 'POST',
+        headers: T.webhookHeaders(),
+        body: JSON.stringify({
+          jobName: T.$('jobName').value,
+          id: T.$('jobId').value,
+          companyId: T.$('companyId').value,
+          status,
+        }),
+      });
+    }
+
+    T.$('roundId').addEventListener('change', (event) => {
+      T.setRoundId(event.target.value);
+      loadPeople().catch((error) => T.showLog('Error', error.message));
+    });
+    T.$('loadPeople').addEventListener('click', () => loadPeople().catch((error) => T.showLog('Error', error.message)));
+    T.$('fillFromPerson').addEventListener('click', () => {
+      if (people[0]) T.$('companyId').value = people[0].companyId;
+    });
+    T.$('people').addEventListener('click', (event) => {
+      const companyId = event.target?.dataset?.company;
+      if (companyId) T.$('companyId').value = companyId;
+    });
+    T.$('sendCreate').addEventListener('click', () => send('create').catch((error) => T.showLog('Error', error.message)));
+    T.$('sendPublish').addEventListener('click', () => send('publish').catch((error) => T.showLog('Error', error.message)));
+
+    loadPeople().catch((error) => T.showLog('Error', error.message));
+  </script>
+</body>
+</html>

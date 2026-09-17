@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hirance test — Participants</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <h1>Participants</h1>
+        <p>Add people to the selected round with mobile number, company id, company name, and user name.</p>
+      </div>
+    </header>
+
+    <nav id="nav" class="tabs"></nav>
+
+    <section class="keys">
+      <div>
+        <label for="adminKey">Admin API key</label>
+        <input id="adminKey" type="password" autocomplete="off" />
+      </div>
+      <div>
+        <label for="webhookSecret">Webhook secret</label>
+        <input id="webhookSecret" type="password" autocomplete="off" />
+      </div>
+      <div>
+        <label for="roundId">Round</label>
+        <select id="roundId" data-round-id></select>
+      </div>
+      <div class="actions" style="align-items: end;">
+        <button class="primary" id="refresh" type="button">Refresh</button>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Add participant</h2>
+        <div class="row">
+          <div>
+            <label for="name">User name</label>
+            <input id="name" placeholder="Ada Lovelace" />
+          </div>
+          <div>
+            <label for="mobileNumber">Mobile number</label>
+            <input id="mobileNumber" placeholder="9990001111" />
+          </div>
+        </div>
+        <div class="row" style="margin-top: 10px;">
+          <div>
+            <label for="companyName">Company name</label>
+            <input id="companyName" placeholder="Hirance" />
+          </div>
+          <div>
+            <label for="companyId">Company id</label>
+            <input id="companyId" placeholder="co_1" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="fillSample" type="button">Fill sample</button>
+          <button class="primary" id="addParticipant" type="button">Add to round</button>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Notes</h2>
+        <p class="empty">Mobile number and company id must be unique inside the same round. Participants can still be added while a round is draft or active, but not after stop.</p>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2>People in this round</h2>
+      <div id="people"></div>
+    </section>
+
+    <section class="log">
+      <h2 id="logTitle">API log</h2>
+      <pre id="logBody">Load a round, then add a participant.</pre>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+  <script>
+    const T = window.HiranceTest;
+    T.renderNav('participants.html');
+    T.loadKeys();
+
+    async function refresh() {
+      await T.loadRoundsInto('roundId');
+      const roundId = T.currentRoundId();
+      if (!roundId) {
+        T.$('people').innerHTML = '<p class="empty">Create a round first.</p>';
+        return;
+      }
+      const people = await T.adminGet(`/admin/rounds/${roundId}/participants`);
+      const list = Array.isArray(people) ? people : [];
+      T.$('people').innerHTML = list.length
+        ? `<table>
+            <thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Company</th><th>Company id</th></tr></thead>
+            <tbody>${list.map((person) => `
+              <tr>
+                <td>#${person.id}</td>
+                <td>${person.name}</td>
+                <td>${person.mobileNumber}</td>
+                <td>${person.companyName}</td>
+                <td>${person.companyId}</td>
+              </tr>`).join('')}</tbody>
+          </table>`
+        : '<p class="empty">No participants in this round.</p>';
+    }
+
+    T.$('roundId').addEventListener('change', (event) => {
+      T.setRoundId(event.target.value);
+      refresh().catch((error) => T.showLog('Error', error.message));
+    });
+    T.$('refresh').addEventListener('click', () => refresh().catch((error) => T.showLog('Error', error.message)));
+    T.$('fillSample').addEventListener('click', () => {
+      const n = Math.floor(Math.random() * 90 + 10);
+      T.$('name').value = `Tester ${n}`;
+      T.$('mobileNumber').value = `90000000${n}`;
+      T.$('companyName').value = 'Hirance';
+      T.$('companyId').value = `co_${n}`;
+    });
+    T.$('addParticipant').addEventListener('click', async () => {
+      await T.adminSend('POST', `/admin/rounds/${T.currentRoundId()}/participants`, {
+        name: T.$('name').value,
+        mobileNumber: T.$('mobileNumber').value,
+        companyName: T.$('companyName').value,
+        companyId: T.$('companyId').value,
+      });
+      await refresh();
+    });
+
+    refresh().catch((error) => T.showLog('Error', error.message));
+  </script>
+</body>
+</html>
