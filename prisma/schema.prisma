@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -12,19 +10,93 @@ datasource db {
   provider = "postgresql"
 }
 
+enum RoundStatus {
+  draft
+  active
+  closed
+}
 
+model Round {
+  id                Int            @id @default(autoincrement())
+  name              String
+  status            RoundStatus    @default(draft)
+  timeLimitSeconds  Int
+  startedAt         DateTime?
+  stoppedAt         DateTime?
+  participants      Participant[]
+  webhookEvents     WebhookEvent[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
-  posts Post[]
-} 
-model Post { 
-  id        Int     @id @default(autoincrement()) 
-  title     String
-  content   String?
-  published Boolean @default(false) 
-  author    User    @relation(fields: [authorId], references: [id]) 
-  authorId  Int
-} 
+  @@index([status])
+}
+
+model Participant {
+  id           Int      @id @default(autoincrement())
+  name         String
+  companyName  String
+  mobileNumber String
+  companyId    String
+  roundId      Int
+  round        Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  scores       Score[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([roundId, mobileNumber])
+  @@unique([roundId, companyId])
+  @@index([companyId])
+  @@index([roundId])
+}
+
+enum JobStatus {
+  create
+  publish
+}
+
+model Job {
+  id          Int       @id @default(autoincrement())
+  jobId       String    @unique
+  jobName     String
+  companyId   String
+  status      JobStatus @default(create)
+  payload     Json?
+  publishedAt DateTime?
+  scores      Score[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+}
+
+model Score {
+  id            Int         @id @default(autoincrement())
+  points        Int         @default(0)
+  elapsedMs     Int?
+  participantId Int
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  jobId         Int?
+  job           Job?        @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([participantId, jobId])
+  @@index([participantId])
+  @@index([jobId])
+}
+
+model WebhookEvent {
+  id        Int       @id @default(autoincrement())
+  roundId   Int
+  round     Round     @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  companyId String
+  jobKey    String
+  status    JobStatus
+  elapsedMs Int
+  createdAt DateTime  @default(now())
+
+  @@index([roundId])
+  @@index([companyId])
+  @@index([jobKey])
+}
