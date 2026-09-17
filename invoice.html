@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TAX INVOICE INV-202609-0048</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #0b1329;
+      --ink: #0f172a;
+      --ink-2: #1e293b;
+      --muted: #64748b;
+      --label: #94a3b8;
+      --blue: #3b82f6;
+      --line: #e5e7eb;
+      --line-soft: #f3f4f6;
+      --card: #f8fafc;
+      --card-border: #e2e8f0;
+      --green: #15803d;
+      --green-bg: #dcfce7;
+      --page: #e8eef4;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background: var(--page);
+      color: var(--ink);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .invoice {
+      width: 764px;
+      max-width: 100%;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 40px 42px 32px;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .brand svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
+
+    .brand-name {
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      color: #000041;
+      line-height: 1;
+    }
+
+    .title-block {
+      text-align: right;
+    }
+
+    .title-block h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--navy);
+      line-height: 1.1;
+    }
+
+    .inv-no {
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+      letter-spacing: 0.01em;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--green-bg);
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .accent {
+      height: 2px;
+      border: 0;
+      background: var(--blue);
+      margin: 22px 0 24px;
+      border-radius: 2px;
+    }
+
+    /* Parties */
+    .parties {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .party {
+      background: var(--card);
+      border: 1px solid #eef2f6;
+      border-radius: 16px;
+      padding: 18px 18px 20px 20px;
+      min-height: 176px;
+    }
+
+    .party-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--blue);
+      text-transform: uppercase;
+    }
+
+    .party-name {
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .party-meta {
+      margin-top: 8px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .party-meta .site {
+      display: block;
+      margin-top: 16px;
+    }
+
+    .dot {
+      margin: 0 4px;
+      color: #94a3b8;
+    }
+
+    /* Meta grid */
+    .meta {
+      margin-top: 24px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .meta-cell {
+      padding: 14px 16px 16px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .meta-cell:nth-child(4n) {
+      border-right: 0;
+    }
+
+    .meta-cell:nth-child(n + 5) {
+      border-bottom: 0;
+    }
+
+    .meta-label {
+      font-size: 12px;
+      color: var(--label);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .meta-value {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    /* Line items */
+    .items {
+      margin-top: 32px;
+    }
+
+    .items-head,
+    .items-row {
+      display: grid;
+      grid-template-columns: 1fr 86px 170px 158px;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    .items-head {
+      height: 40px;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .items-body {
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .items-row {
+      min-height: 56px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .col-qty,
+    .col-rate,
+    .col-amt,
+    .items-head span:not(:first-child) {
+      text-align: right;
+    }
+
+    /* Summary */
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 32px;
+      margin-top: 28px;
+    }
+
+    .words-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .words-text {
+      max-width: 328px;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+    }
+
+    .totals {
+      width: 252px;
+      flex-shrink: 0;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      padding: 7px 0;
+      font-size: 14px;
+    }
+
+    .totals-row dt {
+      color: #475569;
+      font-weight: 500;
+    }
+
+    .totals-row dd {
+      color: var(--ink-2);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .totals-row.total {
+      margin-top: 6px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .totals-row.total dt,
+    .totals-row.total dd {
+      color: var(--navy);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .footer {
+      margin-top: 36px;
+      padding-top: 18px;
+      border-top: 1px solid #eef0f3;
+      text-align: center;
+      font-size: 12.5px;
+      color: #94a3b8;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+      .invoice {
+        box-shadow: none;
+        border: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <article class="invoice">
+    <header class="header">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <defs>
+            <linearGradient id="h" x1="6" y1="2" x2="26" y2="30" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#1d4ed8" />
+              <stop offset="0.45" stop-color="#2563eb" />
+              <stop offset="1" stop-color="#3b82f6" />
+            </linearGradient>
+          </defs>
+          <rect x="4" y="2.6" width="6.6" height="26.8" rx="2.1" fill="url(#h)" />
+          <rect x="21.4" y="2.6" width="6.6" height="26.8" rx="2.1" fill="url(#h)" />
+          <path d="M12.6 8.6 19.6 16l-7 7.4" fill="none" stroke="url(#h)" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="brand-name">Hirance</span>
+      </div>
+      <div class="title-block">
+        <h1>TAX INVOICE</h1>
+        <div class="inv-no">INV-202609-0048</div>
+        <span class="badge">Paid</span>
+      </div>
+    </header>
+
+    <hr class="accent" />
+
+    <section class="parties">
+      <div class="party">
+        <div class="party-label">From</div>
+        <div class="party-name">Hirance</div>
+        <div class="party-meta">
+          Janki Puram Extension, Lucknow-226021, India<br />
+          hello@hirance.com<span class="dot">·</span>+91 97937 80913
+          <span class="site">hirance.com</span>
+        </div>
+      </div>
+      <div class="party">
+        <div class="party-label">Bill To</div>
+        <div class="party-name">JBLR Pvt Limited Company</div>
+        <div class="party-meta">
+          Vinamra Khand, Gomti Nagar, Bareilly, Uttar<br />
+          Pradesh<br />
+          PAN: BIJJY2322Y<br />
+          wdwdew@gmail.com<span class="dot">·</span>+91 83698 43496
+        </div>
+      </div>
+    </section>
+
+    <section class="meta">
+      <div class="meta-cell">
+        <div class="meta-label">Issued</div>
+        <div class="meta-value">08 Sep 2026, 17:47</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Due</div>
+        <div class="meta-value">15 Sep 2026, 17:47</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Paid</div>
+        <div class="meta-value">08 Sep 2026, 17:47</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Plan</div>
+        <div class="meta-value">Growth</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Payment Method</div>
+        <div class="meta-value">Netbanking</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Order ID</div>
+        <div class="meta-value">order_TZXW9L...</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Payment ID</div>
+        <div class="meta-value">pay_TZXWF3...</div>
+      </div>
+      <div class="meta-cell">
+        <div class="meta-label">Promo</div>
+        <div class="meta-value">—</div>
+      </div>
+    </section>
+
+    <section class="items">
+      <div class="items-head">
+        <span>Description</span>
+        <span>Qty</span>
+        <span>Rate</span>
+        <span>Amount</span>
+      </div>
+      <div class="items-body">
+        <div class="items-row">
+          <span>Growth – Quarterly</span>
+          <span class="col-qty">1</span>
+          <span class="col-rate">₹2,799.00</span>
+          <span class="col-amt">₹2,799.00</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary">
+      <div>
+        <div class="words-label">Amount in words</div>
+        <p class="words-text">INR Three Thousand Three Hundred Eighty Six and Seventy Nine Paise Only</p>
+      </div>
+      <dl class="totals">
+        <div class="totals-row">
+          <dt>Subtotal</dt>
+          <dd>₹2,799.00</dd>
+        </div>
+        <div class="totals-row">
+          <dt>GST (18%)</dt>
+          <dd>₹503.82</dd>
+        </div>
+        <div class="totals-row">
+          <dt>Platform fee (3%)</dt>
+          <dd>₹83.97</dd>
+        </div>
+        <div class="totals-row total">
+          <dt>Total</dt>
+          <dd>₹3,386.79</dd>
+        </div>
+      </dl>
+    </section>
+
+    <footer class="footer">
+      This is a system-generated tax invoice and does not require a signature.
+    </footer>
+  </article>
+</body>
+</html>
