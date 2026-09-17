@@ -56,12 +56,40 @@ export class AdminService {
   }
 
   async getRound(roundId: number) {
+    return this.getRoundDetails(roundId);
+  }
+
+  async getActiveRound() {
+    const round = await this.prisma.round.findFirst({
+      where: { status: 'active' },
+      orderBy: { startedAt: 'desc' },
+    });
+
+    if (!round) {
+      throw new NotFoundException('No active round');
+    }
+
+    return this.getRoundDetails(round.id);
+  }
+
+  async getRoundDetails(roundId: number) {
+    const now = new Date();
     const round = await this.prisma.round.findUnique({
       where: { id: roundId },
       include: {
-        participants: { orderBy: { createdAt: 'desc' } },
-        webhookEvents: { orderBy: { createdAt: 'desc' }, take: 50 },
-        _count: { select: { participants: true } },
+        participants: {
+          orderBy: { createdAt: 'asc' },
+          include: {
+            scores: {
+              include: { job: true },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
+        webhookEvents: { orderBy: { createdAt: 'desc' } },
+        _count: {
+          select: { participants: true, webhookEvents: true },
+        },
       },
     });
 
@@ -69,7 +97,68 @@ export class AdminService {
       throw new NotFoundException(`Round ${roundId} not found`);
     }
 
-    return withRoundTiming(round);
+    const participants = round.participants.map((participant) =>
+      this.toParticipantSummary(participant),
+    );
+    const leaderboard = rankParticipants(participants);
+    const totalPoints = participants.reduce(
+      (sum, participant) => sum + participant.totalPoints,
+      0,
+    );
+
+    return {
+      ...withRoundTiming(round, now),
+      participants,
+      leaderboard,
+      events: round.webhookEvents,
+      summary: {
+        participantCount: round._count.participants,
+        eventCount: round._count.webhookEvents,
+        totalPoints,
+        scoredJobs: participants.reduce(
+          (sum, participant) => sum + participant.jobCount,
+          0,
+        ),
+      },
+    };
+  }
+
+  async getLeaderboard(roundId: number) {
+    const details = await this.getRoundDetails(roundId);
+    return {
+      roundId: details.id,
+      name: details.name,
+      status: details.status,
+      elapsedMs: details.elapsedMs,
+      remainingMs: details.remainingMs,
+      expired: details.expired,
+      summary: details.summary,
+      leaderboard: details.leaderboard,
+    };
+  }
+
+  async getParticipantDetails(roundId: number, participantId: number) {
+    const participant = await this.prisma.participant.findFirst({
+      where: { id: participantId, roundId },
+      include: {
+        round: true,
+        scores: {
+          include: { job: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!participant) {
+      throw new NotFoundException(
+        `Participant ${participantId} not found in round ${roundId}`,
+      );
+    }
+
+    return {
+      round: withRoundTiming(participant.round),
+      ...this.toParticipantSummary(participant),
+    };
   }
 
   async updateRound(roundId: number, dto: UpdateRoundDto) {
@@ -214,6 +303,56 @@ export class AdminService {
     });
   }
 
+  private toParticipantSummary(participant: {
+    id: number;
+    name: string;
+    companyName: string;
+    mobileNumber: string;
+    companyId: string;
+    createdAt: Date;
+    scores: Array<{
+      id: number;
+      points: number;
+      elapsedMs: number | null;
+      createdAt: Date;
+      job: {
+        jobId: string;
+        jobName: string;
+        status: string;
+        publishedAt: Date | null;
+      } | null;
+    }>;
+  }) {
+    const scores = participant.scores.map((score) => ({
+      id: score.id,
+      points: score.points,
+      elapsedMs: score.elapsedMs,
+      jobId: score.job?.jobId ?? null,
+      jobName: score.job?.jobName ?? null,
+      status: score.job?.status ?? null,
+      publishedAt: score.job?.publishedAt ?? null,
+      createdAt: score.createdAt,
+    }));
+    const totalPoints = scores.reduce((sum, score) => sum + score.points, 0);
+    const elapsedValues = scores
+      .map((score) => score.elapsedMs)
+      .filter((value): value is number => value != null);
+
+    return {
+      id: participant.id,
+      name: participant.name,
+      companyName: participant.companyName,
+      mobileNumber: participant.mobileNumber,
+      companyId: participant.companyId,
+      createdAt: participant.createdAt,
+      totalPoints,
+      lastElapsedMs:
+        elapsedValues.length > 0 ? Math.max(...elapsedValues) : null,
+      jobCount: scores.length,
+      scores,
+    };
+  }
+
   private async ensureRoundExists(roundId: number) {
     const round = await this.prisma.round.findUnique({
       where: { id: roundId },
@@ -253,4 +392,23 @@ function optionalTimeLimit(dto: UpdateRoundDto): number | undefined {
   }
 
   return resolveTimeLimitSeconds(dto);
+}
+
+function rankParticipants<
+  T extends { totalPoints: number; lastElapsedMs: number | null },
+>(participants: T[]) {
+  return [...participants]
+    .sort((left, right) => {
+      if (right.totalPoints !== left.totalPoints) {
+        return right.totalPoints - left.totalPoints;
+      }
+
+      const leftElapsed = left.lastElapsedMs ?? Number.MAX_SAFE_INTEGER;
+      const rightElapsed = right.lastElapsedMs ?? Number.MAX_SAFE_INTEGER;
+      return leftElapsed - rightElapsed;
+    })
+    .map((participant, index) => ({
+      rank: index + 1,
+      ...participant,
+    }));
 }

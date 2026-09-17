@@ -29,9 +29,32 @@ export class AdminController {
     return this.adminService.listRounds();
   }
 
+  @Get('rounds/active')
+  getActiveRound() {
+    return this.adminService.getActiveRound();
+  }
+
   @Get('rounds/:roundId')
   getRound(@Param('roundId', ParseIntPipe) roundId: number) {
     return this.adminService.getRound(roundId);
+  }
+
+  @Get('rounds/:roundId/details')
+  getRoundDetails(@Param('roundId', ParseIntPipe) roundId: number) {
+    return this.adminService.getRoundDetails(roundId);
+  }
+
+  @Get('rounds/:roundId/leaderboard')
+  getLeaderboard(@Param('roundId', ParseIntPipe) roundId: number) {
+    return this.adminService.getLeaderboard(roundId);
+  }
+
+  @Get('rounds/:roundId/participants/:participantId')
+  getParticipantDetails(
+    @Param('roundId', ParseIntPipe) roundId: number,
+    @Param('participantId', ParseIntPipe) participantId: number,
+  ) {
+    return this.adminService.getParticipantDetails(roundId, participantId);
   }
 
   @Patch('rounds/:roundId')
