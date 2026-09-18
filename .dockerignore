@@ -1,0 +1,17 @@
+.git
+.gitignore
+.claude
+.agents
+.windsurf
+.cursor
+node_modules
+dist
+generated
+coverage
+.env
+.env.*
+*.md
+invoice.html
+test
+**/*.spec.ts
+terminals
