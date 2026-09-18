@@ -12,6 +12,10 @@ COPY tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY src ./src
 COPY public ./public
 
+# prisma generate reads prisma7.config.ts, which requires DATABASE_URL.
+# A placeholder is enough; the real URL is injected at container start.
+ARG DATABASE_URL=postgresql://prisma:prisma@localhost:5432/prisma
+ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 RUN npm run build
 RUN mkdir -p dist/generated && cp -r generated/prisma dist/generated/prisma
