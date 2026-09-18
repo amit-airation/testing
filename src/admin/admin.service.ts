@@ -98,13 +98,10 @@ export class AdminService {
     }
 
     const participants = round.participants.map((participant) =>
-      this.toParticipantSummary(participant),
+      this.toParticipantSummary(participant, round.webhookEvents),
     );
     const leaderboard = rankParticipants(participants);
-    const totalPoints = participants.reduce(
-      (sum, participant) => sum + participant.totalPoints,
-      0,
-    );
+    const { createCount, publishCount } = countByStatus(round.webhookEvents);
 
     return {
       ...withRoundTiming(round, now),
@@ -114,11 +111,8 @@ export class AdminService {
       summary: {
         participantCount: round._count.participants,
         eventCount: round._count.webhookEvents,
-        totalPoints,
-        scoredJobs: participants.reduce(
-          (sum, participant) => sum + participant.jobCount,
-          0,
-        ),
+        createCount,
+        publishCount,
       },
     };
   }
@@ -155,9 +149,13 @@ export class AdminService {
       );
     }
 
+    const events = await this.prisma.webhookEvent.findMany({
+      where: { roundId, companyId: participant.companyId },
+    });
+
     return {
       round: withRoundTiming(participant.round),
-      ...this.toParticipantSummary(participant),
+      ...this.toParticipantSummary(participant, events),
     };
   }
 
@@ -303,29 +301,30 @@ export class AdminService {
     });
   }
 
-  private toParticipantSummary(participant: {
-    id: number;
-    name: string;
-    companyName: string;
-    mobileNumber: string;
-    companyId: string;
-    createdAt: Date;
-    scores: Array<{
+  private toParticipantSummary(
+    participant: {
       id: number;
-      points: number;
-      elapsedMs: number | null;
+      name: string;
+      companyName: string;
+      mobileNumber: string;
+      companyId: string;
       createdAt: Date;
-      job: {
-        jobId: string;
-        jobName: string;
-        status: string;
-        publishedAt: Date | null;
-      } | null;
-    }>;
-  }) {
+      scores: Array<{
+        id: number;
+        elapsedMs: number | null;
+        createdAt: Date;
+        job: {
+          jobId: string;
+          jobName: string;
+          status: string;
+          publishedAt: Date | null;
+        } | null;
+      }>;
+    },
+    events: Array<{ companyId: string; status: string }>,
+  ) {
     const scores = participant.scores.map((score) => ({
       id: score.id,
-      points: score.points,
       elapsedMs: score.elapsedMs,
       jobId: score.job?.jobId ?? null,
       jobName: score.job?.jobName ?? null,
@@ -333,10 +332,12 @@ export class AdminService {
       publishedAt: score.job?.publishedAt ?? null,
       createdAt: score.createdAt,
     }));
-    const totalPoints = scores.reduce((sum, score) => sum + score.points, 0);
     const elapsedValues = scores
       .map((score) => score.elapsedMs)
       .filter((value): value is number => value != null);
+    const { createCount, publishCount } = countByStatus(
+      events.filter((event) => event.companyId === participant.companyId),
+    );
 
     return {
       id: participant.id,
@@ -345,7 +346,8 @@ export class AdminService {
       mobileNumber: participant.mobileNumber,
       companyId: participant.companyId,
       createdAt: participant.createdAt,
-      totalPoints,
+      createCount,
+      publishCount,
       lastElapsedMs:
         elapsedValues.length > 0 ? Math.max(...elapsedValues) : null,
       jobCount: scores.length,
@@ -394,13 +396,30 @@ function optionalTimeLimit(dto: UpdateRoundDto): number | undefined {
   return resolveTimeLimitSeconds(dto);
 }
 
+function countByStatus(events: Array<{ status: string }>) {
+  let createCount = 0;
+  let publishCount = 0;
+  for (const event of events) {
+    if (event.status === 'create') createCount += 1;
+    if (event.status === 'publish') publishCount += 1;
+  }
+  return { createCount, publishCount };
+}
+
 function rankParticipants<
-  T extends { totalPoints: number; lastElapsedMs: number | null },
+  T extends {
+    publishCount: number;
+    createCount: number;
+    lastElapsedMs: number | null;
+  },
 >(participants: T[]) {
   return [...participants]
     .sort((left, right) => {
-      if (right.totalPoints !== left.totalPoints) {
-        return right.totalPoints - left.totalPoints;
+      if (right.publishCount !== left.publishCount) {
+        return right.publishCount - left.publishCount;
+      }
+      if (right.createCount !== left.createCount) {
+        return right.createCount - left.createCount;
       }
 
       const leftElapsed = left.lastElapsedMs ?? Number.MAX_SAFE_INTEGER;

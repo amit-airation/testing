@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { JobStatus } from '../../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   elapsedSinceStartMs,
@@ -12,17 +11,11 @@ import {
 } from '../round/round-timing.js';
 import { JobWebhookDto } from './dto/job-webhook.dto.js';
 
-const JOB_STATUS_POINTS: Record<JobStatus, number> = {
-  create: 10,
-  publish: 25,
-};
-
 @Injectable()
 export class WebhookService {
   constructor(private readonly prisma: PrismaService) {}
 
   async handleJobEvent(dto: JobWebhookDto, rawPayload: unknown) {
-    const targetPoints = JOB_STATUS_POINTS[dto.status];
     const now = new Date();
 
     return this.prisma.$transaction(async (tx) => {
@@ -83,6 +76,7 @@ export class WebhookService {
           companyId: dto.companyId,
           status: dto.status,
           payload: rawPayload as object,
+          createdAt: dto.createdAt,
           publishedAt: dto.status === 'publish' ? now : null,
         },
         update: {
@@ -103,29 +97,43 @@ export class WebhookService {
         },
       });
 
-      const previousPoints = existingScore?.points ?? 0;
-      const points = Math.max(previousPoints, targetPoints);
-
       const score = existingScore
         ? await tx.score.update({
             where: { id: existingScore.id },
-            data: { points, elapsedMs },
+            data: { elapsedMs },
           })
         : await tx.score.create({
             data: {
-              points,
               elapsedMs,
               participantId: participant.id,
               jobId: job.id,
             },
           });
 
+      const [createCount, publishCount] = await Promise.all([
+        tx.webhookEvent.count({
+          where: {
+            roundId: round.id,
+            companyId: dto.companyId,
+            status: 'create',
+          },
+        }),
+        tx.webhookEvent.count({
+          where: {
+            roundId: round.id,
+            companyId: dto.companyId,
+            status: 'publish',
+          },
+        }),
+      ]);
+
       return {
         job,
         participant,
         score,
         webhookEvent,
-        pointsAwarded: points - previousPoints,
+        createCount,
+        publishCount,
         elapsedMs,
         remainingMs: Math.max(0, roundLimitMs(round.timeLimitSeconds) - elapsedMs),
         timeLimitSeconds: round.timeLimitSeconds,

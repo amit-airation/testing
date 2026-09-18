@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Round Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #071018;
+      --bg-2: #0c1822;
+      --panel: #10202c;
+      --panel-2: #152836;
+      --line: rgba(148, 196, 214, 0.14);
+      --ink: #e8f2f6;
+      --muted: #8aa3b3;
+      --copper: #e0a45a;
+      --gold: #f3c56b;
+      --live: #3ee0b3;
+      --danger: #ff7a7a;
+      --draft: #7eb6ff;
+      --closed: #9aa8b3;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      background:
+        radial-gradient(1200px 500px at 10% -10%, rgba(224, 164, 90, 0.12), transparent 50%),
+        radial-gradient(900px 400px at 100% 0%, rgba(62, 224, 179, 0.08), transparent 45%),
+        var(--bg);
+      color: var(--ink);
+      font-family: Sora, system-ui, sans-serif;
+      letter-spacing: -0.01em;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: auto minmax(280px, 1fr) auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 16, 24, 0.86);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+    }
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--copper), #c9782a);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #1a1208;
+    }
+    .brand h1 { font-size: 15px; font-weight: 600; }
+    .brand p { color: var(--muted); font-size: 11px; margin-top: 2px; }
+    .auth {
+      display: flex;
+      gap: 8px;
+      flex: 1;
+      max-width: 720px;
+    }
+    .auth input {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    .auth input:focus { border-color: var(--copper); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+    }
+    .dot.on { background: var(--live); box-shadow: 0 0 10px var(--live); }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      background: var(--panel-2);
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, var(--copper), #c9782a); color: #1a1208; }
+    .btn-live { background: var(--live); color: #06281e; }
+    .btn-danger { background: #3a1c22; color: #ffb4b4; border: 1px solid rgba(255,122,122,0.3); }
+    .btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 0;
+    }
+
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--bg-2);
+      padding: 16px;
+      overflow: auto;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .panel h2, .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    input, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--copper); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .full { width: 100%; margin-top: 12px; }
+
+    .rounds { margin-top: 16px; display: grid; gap: 8px; }
+    .round-card {
+      text-align: left;
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .round-card.active-card { border-color: rgba(62, 224, 179, 0.5); }
+    .round-card.selected { outline: 2px solid var(--copper); }
+    .round-card b { display: block; font-size: 14px; margin-bottom: 6px; }
+    .meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
+
+    main { padding: 16px 20px 32px; overflow: auto; }
+    .empty {
+      min-height: 60vh;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .round-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .badge.draft { background: rgba(126,182,255,0.15); color: var(--draft); }
+    .badge.active { background: rgba(62,224,179,0.15); color: var(--live); }
+    .badge.closed { background: rgba(154,168,179,0.15); color: var(--closed); }
+    .badge.expired { background: rgba(255,122,122,0.15); color: var(--danger); }
+
+    .clock {
+      background: #07141c;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 16px;
+      min-width: 220px;
+      text-align: right;
+    }
+    .clock .time {
+      font-size: 34px;
+      font-weight: 600;
+      color: var(--gold);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .clock small { color: var(--muted); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .stat span { color: var(--muted); font-size: 12px; }
+    .stat strong { display: block; margin-top: 6px; font-size: 24px; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+    }
+    .leaderboard-row, .person, .event {
+      display: grid;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .leaderboard-row { grid-template-columns: 42px 1fr auto auto auto; }
+    .person { grid-template-columns: 1fr auto; }
+    .event { grid-template-columns: 90px 1fr auto; font-size: 13px; }
+    .rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: var(--panel-2);
+      font-weight: 700;
+    }
+    .rank.r1 { background: #f3c56b; color: #2b1d07; }
+    .rank.r2 { background: #c9d3dc; color: #1c242b; }
+    .rank.r3 { background: #c9844d; color: #1c120b; }
+    .sub { color: var(--muted); font-size: 12px; }
+    .points { color: var(--gold); font-weight: 700; }
+    .score-list { display: none; padding: 0 0 12px 0; }
+    .score-list.open { display: block; }
+    .score-chip {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .toast {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      background: #1b2c38;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      padding: 12px 14px;
+      border-radius: 12px;
+      max-width: 360px;
+      display: none;
+      z-index: 50;
+    }
+    .toast.show { display: block; }
+    .toast.err { border-color: rgba(255,122,122,0.4); }
+
+    @media (max-width: 1100px) {
+      header, .shell, .grid-2, .stats, .round-head, .auth { grid-template-columns: 1fr; }
+      .shell { display: block; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="mark">R</div>
+        <div>
+          <h1>Round Admin</h1>
+          <p>Create rounds, register teams, watch scores</p>
+        </div>
+      </div>
+      <form class="auth" id="auth-form">
+        <input id="api-base" placeholder="API base (blank = this origin)" />
+        <input id="api-key" type="password" placeholder="Admin API key" autocomplete="off" />
+        <button class="btn btn-primary" type="submit">Connect</button>
+      </form>
+      <div class="status-pill"><span class="dot" id="conn-dot"></span><span id="conn-label">Disconnected</span></div>
+      <button class="btn btn-ghost" id="refresh-btn" type="button">Refresh</button>
+    </header>
+
+    <div class="shell">
+      <aside>
+        <div class="panel">
+          <h2>Create round</h2>
+          <form id="create-round-form">
+            <label for="round-name">Name</label>
+            <input id="round-name" required placeholder="Campus Hackathon" />
+            <div class="row">
+              <div>
+                <label for="round-minutes">Minutes</label>
+                <input id="round-minutes" type="number" min="1" value="15" required />
+              </div>
+              <div>
+                <label for="round-status">Start as</label>
+                <select id="round-status">
+                  <option value="draft">Draft</option>
+                  <option value="active">Active now</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary full" type="submit">Create round</button>
+          </form>
+        </div>
+        <div class="rounds" id="rounds"></div>
+      </aside>
+
+      <main id="main">
+        <div class="empty">Connect with the admin API key, then select a round.</div>
+      </main>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = "round-admin-api-key";
+    const STORAGE_BASE = "round-admin-api-base";
+    const state = {
+      connected: false,
+      rounds: [],
+      selectedId: null,
+      details: null,
+      expanded: new Set(),
+      participantDraft: { name: "", companyName: "", mobileNumber: "", companyId: "" },
+    };
+    let pollTimer = null;
+    let clockTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+    $("api-key").value = localStorage.getItem(STORAGE_KEY) || "";
+    $("api-base").value = localStorage.getItem(STORAGE_BASE) || "";
+
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function toast(message, err = false) {
+      toastEl.textContent = message;
+      toastEl.className = "toast show" + (err ? " err" : "");
+      setTimeout(() => toastEl.classList.remove("show"), 3200);
+    }
+
+    function apiBase() {
+      const value = $("api-base").value.trim().replace(/\/$/, "");
+      if (value) return value;
+      if (location.protocol === "file:") return "http://localhost:3000";
+      return "";
+    }
+
+    function apiKey() {
+      return $("api-key").value.trim();
+    }
+
+    async function api(path, options = {}) {
+      const headers = {
+        "x-api-key": apiKey(),
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {}),
+      };
+      const res = await fetch(apiBase() + path, { ...options, headers });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = { message: text }; }
+      if (!res.ok) {
+        const message = Array.isArray(data?.message) ? data.message.join(", ") : (data?.message || res.statusText);
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    function formatClock(ms) {
+      if (ms == null) return "--:--";
+      const total = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function formatElapsed(ms) {
+      if (ms == null) return "—";
+      const total = Math.max(0, ms);
+      const m = Math.floor(total / 60000);
+      const s = Math.floor((total % 60000) / 1000);
+      const tenths = Math.floor((total % 1000) / 100);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${tenths}`;
+    }
+
+    function setConnected(on, label) {
+      state.connected = on;
+      $("conn-dot").classList.toggle("on", on);
+      $("conn-label").textContent = label;
+    }
+
+    async function loadRounds(selectId = state.selectedId) {
+      state.rounds = await api("/admin/rounds");
+      renderRounds();
+      const preferred = selectId || state.rounds.find((r) => r.status === "active")?.id || state.rounds[0]?.id;
+      if (preferred) await selectRound(preferred, false);
+      else {
+        state.details = null;
+        renderMain();
+      }
+    }
+
+    async function selectRound(id, scroll = true) {
+      state.selectedId = Number(id);
+      state.details = await api(`/admin/rounds/${state.selectedId}/details`);
+      renderRounds();
+      renderMain();
+      if (scroll) $("main").scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderRounds() {
+      $("rounds").innerHTML = state.rounds.map((round) => `
+        <button class="round-card ${round.status === "active" ? "active-card" : ""} ${round.id === state.selectedId ? "selected" : ""}" data-id="${round.id}">
+          <b>${esc(round.name)}</b>
+          <div class="meta">
+            <span class="badge ${esc(round.status)}">${esc(round.status)}</span>
+            <span>${round._count?.participants ?? 0} teams · ${Math.round(round.timeLimitSeconds / 60)}m</span>
+          </div>
+        </button>
+      `).join("") || `<p class="sub">No rounds yet.</p>`;
+    }
+
+    function captureDraft() {
+      const form = $("add-participant-form");
+      if (!form) return;
+      state.participantDraft = {
+        name: form.elements.name.value,
+        companyName: form.elements.companyName.value,
+        mobileNumber: form.elements.mobileNumber.value,
+        companyId: form.elements.companyId.value,
+      };
+    }
+
+    function applyDraft() {
+      const form = $("add-participant-form");
+      const draft = state.participantDraft;
+      if (!form || !draft) return;
+      form.elements.name.value = draft.name || "";
+      form.elements.companyName.value = draft.companyName || "";
+      form.elements.mobileNumber.value = draft.mobileNumber || "";
+      form.elements.companyId.value = draft.companyId || "";
+    }
+
+    function clearDraft() {
+      state.participantDraft = { name: "", companyName: "", mobileNumber: "", companyId: "" };
+      $("add-participant-form")?.reset();
+    }
+
+    function paintShell(round) {
+      $("main").dataset.roundId = String(round.id);
+      $("main").innerHTML = `
+        <section class="round-head">
+          <div>
+            <div id="live-status"></div>
+            <h2 id="live-title" style="font-size:28px;margin:8px 0 6px"></h2>
+            <p class="sub" id="live-subtitle"></p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div class="clock">
+              <div class="time mono" id="clock"></div>
+              <small id="live-clock-label"></small>
+            </div>
+            <div id="live-actions"></div>
+          </div>
+        </section>
+        <section class="stats" id="live-stats"></section>
+        <section class="grid-2">
+          <div class="panel">
+            <div class="section-title">Leaderboard</div>
+            <div id="live-leaderboard"></div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="section-title">Add participant</div>
+              <form id="add-participant-form" autocomplete="off">
+                <label>Name</label>
+                <input name="name" required placeholder="Ada Lovelace" />
+                <label>Company name</label>
+                <input name="companyName" required placeholder="Analytical Engines" />
+                <div class="row">
+                  <div>
+                    <label>Mobile</label>
+                    <input name="mobileNumber" required placeholder="9876543210" />
+                  </div>
+                  <div>
+                    <label>Company ID</label>
+                    <input name="companyId" required placeholder="co_42" />
+                  </div>
+                </div>
+                <button class="btn btn-primary full" id="add-participant-btn" type="submit">Add to round</button>
+                <p class="sub" id="add-participant-note" style="margin-top:8px;display:none">Closed rounds cannot take new participants.</p>
+              </form>
+            </div>
+            <div class="panel" style="margin-top:16px">
+              <div class="section-title">Participants & counts</div>
+              <div id="live-participants"></div>
+            </div>
+          </div>
+        </section>
+        <section class="panel" style="margin-top:16px">
+          <div class="section-title">Recent webhook events</div>
+          <div id="live-events"></div>
+        </section>
+      `;
+      applyDraft();
+      startClock();
+    }
+
+    function paintLive(round) {
+      const summary = round.summary || {};
+      const closed = round.status === "closed";
+      $("live-status").innerHTML = `
+        <span class="badge ${esc(round.status)}">${esc(round.status)}</span>
+        ${round.expired ? `<span class="badge expired" style="margin-left:6px">expired</span>` : ""}
+      `;
+      $("live-title").textContent = round.name;
+      $("live-subtitle").textContent = `Round #${round.id} · limit ${Math.round(round.timeLimitSeconds / 60)} min · ranked by publish, then create`;
+      $("clock").textContent = formatClock(round.status === "active" ? round.remainingMs : round.elapsedMs);
+      $("live-clock-label").textContent = round.status === "active" ? "remaining" : round.startedAt ? "elapsed" : "not started";
+      $("live-actions").innerHTML = round.status === "active"
+        ? `<button class="btn btn-danger" id="stop-btn" type="button">Stop round</button>`
+        : `<button class="btn btn-live" id="start-btn" type="button">${round.startedAt ? "Restart round" : "Start round"}</button>`;
+      $("live-stats").innerHTML = `
+        <div class="stat"><span>Participants</span><strong>${summary.participantCount ?? 0}</strong></div>
+        <div class="stat"><span>Creates</span><strong>${summary.createCount ?? 0}</strong></div>
+        <div class="stat"><span>Publishes</span><strong>${summary.publishCount ?? 0}</strong></div>
+        <div class="stat"><span>Webhook events</span><strong>${summary.eventCount ?? 0}</strong></div>
+      `;
+      $("live-leaderboard").innerHTML = (round.leaderboard || []).map((row) => `
+        <div class="leaderboard-row">
+          <div class="rank ${row.rank <= 3 ? "r" + row.rank : ""}">${row.rank}</div>
+          <div>
+            <b>${esc(row.name)}</b>
+            <div class="sub">${esc(row.companyName)} · ${esc(row.companyId)}</div>
+          </div>
+          <div class="sub">${formatElapsed(row.lastElapsedMs)}</div>
+          <div class="mono">${row.createCount ?? 0} create</div>
+          <div class="points mono">${row.publishCount ?? 0} publish</div>
+        </div>
+      `).join("") || `<p class="sub">No events yet. Add participants, then job webhooks will rank them here.</p>`;
+      $("live-participants").innerHTML = (round.participants || []).map((p) => `
+        <div>
+          <button class="person" data-expand="${p.id}" type="button" style="width:100%;background:none;border:0;color:inherit;padding:10px 0">
+            <div style="text-align:left">
+              <b>${esc(p.name)}</b>
+              <div class="sub">${esc(p.companyName)} · ${esc(p.mobileNumber)} · ${esc(p.companyId)}</div>
+            </div>
+            <div class="points mono">${p.createCount ?? 0} create · ${p.publishCount ?? 0} publish</div>
+          </button>
+          <div class="score-list ${state.expanded.has(p.id) ? "open" : ""}" id="scores-${p.id}">
+            ${(p.scores || []).map((s) => `
+              <div class="score-chip">
+                <span>${esc(s.jobName || s.jobId || "Job")} · ${esc(s.status || "—")}</span>
+                <span class="points">${formatElapsed(s.elapsedMs)}</span>
+              </div>
+            `).join("") || `<p class="sub">No jobs yet.</p>`}
+          </div>
+        </div>
+      `).join("") || `<p class="sub">No participants in this round.</p>`;
+      $("live-events").innerHTML = (round.events || []).slice(0, 20).map((e) => `
+        <div class="event">
+          <span class="badge ${e.status === "publish" ? "active" : "draft"}">${esc(e.status)}</span>
+          <span>${esc(e.companyId)} · ${esc(e.jobKey)}</span>
+          <span class="mono sub">${formatElapsed(e.elapsedMs)}</span>
+        </div>
+      `).join("") || `<p class="sub">No webhook events yet.</p>`;
+
+      const form = $("add-participant-form");
+      if (form) {
+        for (const el of form.elements) el.disabled = closed;
+        $("add-participant-note").style.display = closed ? "block" : "none";
+      }
+    }
+
+    function renderMain() {
+      const round = state.details;
+      const main = $("main");
+      if (!round) {
+        clearInterval(clockTimer);
+        main.removeAttribute("data-round-id");
+        main.innerHTML = `<div class="empty">${state.connected ? "Create a round to get started." : "Connect with the admin API key, then select a round."}</div>`;
+        return;
+      }
+
+      const sameRound = main.dataset.roundId === String(round.id) && $("add-participant-form");
+      if (!sameRound) {
+        paintShell(round);
+      }
+      paintLive(round);
+    }
+
+    function startClock() {
+      clearInterval(clockTimer);
+      clockTimer = setInterval(() => {
+        const round = state.details;
+        const clock = $("clock");
+        if (!round || !clock) return;
+        if (round.status === "active" && round.remainingMs != null) {
+          round.remainingMs = Math.max(0, round.remainingMs - 1000);
+          round.elapsedMs = (round.elapsedMs || 0) + 1000;
+          if (round.remainingMs === 0) round.expired = true;
+          clock.textContent = formatClock(round.remainingMs);
+        }
+      }, 1000);
+    }
+
+    function startPolling() {
+      clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        if (!state.connected) return;
+        try {
+          state.rounds = await api("/admin/rounds");
+          renderRounds();
+          if (state.selectedId) {
+            state.details = await api(`/admin/rounds/${state.selectedId}/details`);
+            renderMain();
+          }
+        } catch (err) {
+          setConnected(false, "Lost connection");
+        }
+      }, 5000);
+    }
+
+    $("auth-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      localStorage.setItem(STORAGE_KEY, apiKey());
+      localStorage.setItem(STORAGE_BASE, $("api-base").value.trim());
+      try {
+        await loadRounds();
+        setConnected(true, "Connected");
+        startPolling();
+        toast("Admin console connected");
+      } catch (err) {
+        setConnected(false, "Auth failed");
+        toast(err.message, true);
+      }
+    });
+
+    $("create-round-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      try {
+        const created = await api("/admin/rounds", {
+          method: "POST",
+          body: JSON.stringify({
+            name: $("round-name").value.trim(),
+            timeLimitMinutes: Number($("round-minutes").value),
+            status: $("round-status").value,
+          }),
+        });
+        $("round-name").value = "";
+        toast(`Round ${created.name} created`);
+        await loadRounds(created.id);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    $("rounds").addEventListener("click", (event) => {
+      const card = event.target.closest("[data-id]");
+      if (card) selectRound(card.dataset.id).catch((err) => toast(err.message, true));
+    });
+
+    $("main").addEventListener("input", (event) => {
+      if (event.target.closest("#add-participant-form")) captureDraft();
+    });
+
+    $("main").addEventListener("click", async (event) => {
+      const expand = event.target.closest("[data-expand]");
+      if (expand) {
+        const id = Number(expand.dataset.expand);
+        if (state.expanded.has(id)) state.expanded.delete(id);
+        else state.expanded.add(id);
+        const list = document.getElementById(`scores-${id}`);
+        if (list) list.classList.toggle("open");
+        return;
+      }
+      if (event.target.id === "start-btn") {
+        if (!confirm("Start this round? Any other active round will be closed.")) return;
+        try {
+          await api(`/admin/rounds/${state.selectedId}/start`, { method: "POST" });
+          await loadRounds(state.selectedId);
+          toast("Round started");
+        } catch (err) { toast(err.message, true); }
+      }
+      if (event.target.id === "stop-btn") {
+        try {
+          await api(`/admin/rounds/${state.selectedId}/stop`, { method: "POST" });
+          await loadRounds(state.selectedId);
+          toast("Round stopped");
+        } catch (err) { toast(err.message, true); }
+      }
+    });
+
+    $("main").addEventListener("submit", async (event) => {
+      if (event.target.id !== "add-participant-form") return;
+      event.preventDefault();
+      const form = new FormData(event.target);
+      try {
+        const created = await api(`/admin/rounds/${state.selectedId}/participants`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: form.get("name"),
+            companyName: form.get("companyName"),
+            mobileNumber: form.get("mobileNumber"),
+            companyId: form.get("companyId"),
+          }),
+        });
+        toast(`${created.name} added`);
+        clearDraft();
+        await selectRound(state.selectedId, false);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    $("refresh-btn").addEventListener("click", async () => {
+      try {
+        await loadRounds(state.selectedId);
+        setConnected(true, "Connected");
+        toast("Refreshed");
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+
+    if (apiKey()) {
+      $("auth-form").dispatchEvent(new Event("submit"));
+    }
+  </script>
+</body>
+</html>
