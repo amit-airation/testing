@@ -1,5 +1,7 @@
 # Job Webhook
 
+Base URL: `https://test.amitverma01.dev` (local: `http://localhost:3000`)
+
 `POST /webhooks/jobs`
 
 Send a job `create` event when a job is created, and a `publish` event when it is published.
@@ -21,7 +23,7 @@ Authorization: Bearer $WEBHOOK_SECRET
 | created at | `createdAt`, `created_at` | yes | ISO-8601 UTC timestamp from the source job |
 
 ```bash
-curl -X POST http://localhost:3000/webhooks/jobs \
+curl -X POST https://test.amitverma01.dev/webhooks/jobs \
   -H "Authorization: Bearer $WEBHOOK_SECRET" \
   -H "Content-Type: application/json" \
   -d '{

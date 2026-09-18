@@ -12,20 +12,80 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   api:
     build: .
-    ports:
-      - "${PORT:-3000}:3000"
+    expose:
+      - "3000"
     environment:
       PORT: 3000
       DATABASE_URL: postgres://hirance:hirance@db:5432/hirance
       ADMIN_API_KEY: ${ADMIN_API_KEY}
       WEBHOOK_SECRET: ${WEBHOOK_SECRET}
+      PUBLIC_URL: https://${DOMAIN:-test.amitverma01.dev}
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
 
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-test.amitverma01.dev}
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:v5.8.0
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h & wait $${!};
+      done
+    restart: unless-stopped
+
+  # First TLS cert: point DNS A/AAAA for test.amitverma01.dev at this host, then:
+  #   docker compose --profile setup run --rm certbot-init
+  #   docker compose restart nginx
+  certbot-init:
+    image: certbot/certbot:v5.8.0
+    profiles: ["setup"]
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    environment:
+      DOMAIN: ${DOMAIN:-test.amitverma01.dev}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -e
+      EMAIL_ARGS="--register-unsafely-without-email"
+      if [ -n "$$CERTBOT_EMAIL" ]; then
+        EMAIL_ARGS="--email $$CERTBOT_EMAIL"
+      fi
+      certbot certonly --webroot -w /var/www/certbot \
+        -d "$$DOMAIN" \
+        $$EMAIL_ARGS \
+        --agree-tos --no-eff-email
+    depends_on:
+      nginx:
+        condition: service_healthy
+
 volumes:
   pgdata:
+  certbot_www:
+  certbot_certs:

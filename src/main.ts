@@ -8,6 +8,7 @@ import { AppModule } from './app.module.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.set('trust proxy', 1);
   app.enableCors();
   app.useStaticAssets(join(process.cwd(), 'public'));
   app.useGlobalPipes(
@@ -32,6 +33,11 @@ async function bootstrap() {
       ].join('\n'),
     )
     .setVersion('1.0')
+    .addServer(
+      process.env.PUBLIC_URL ?? 'https://test.amitverma01.dev',
+      'Production',
+    )
+    .addServer('http://localhost:3000', 'Local')
     .addApiKey(
       {
         type: 'apiKey',

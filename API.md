@@ -4,14 +4,14 @@ Admin APIs for rounds, participants, leaderboards, and event listing.
 
 Job webhook ingest (`POST /webhooks/jobs`): [WEBHOOK.md](./WEBHOOK.md)
 
-Base URL: `http://localhost:3000`
+Base URL: `https://test.amitverma01.dev` (local: `http://localhost:3000`)
 
-Interactive OpenAPI UI: [http://localhost:3000/docs](http://localhost:3000/docs)
+Interactive OpenAPI UI: [https://test.amitverma01.dev/docs](https://test.amitverma01.dev/docs)
 
 Machine-readable specs:
 
-- JSON: [http://localhost:3000/docs-json](http://localhost:3000/docs-json)
-- YAML: [http://localhost:3000/docs-yaml](http://localhost:3000/docs-yaml)
+- JSON: [https://test.amitverma01.dev/docs-json](https://test.amitverma01.dev/docs-json)
+- YAML: [https://test.amitverma01.dev/docs-yaml](https://test.amitverma01.dev/docs-yaml)
 
 Dates are ISO-8601 UTC strings. Durations are milliseconds unless the field name says `Seconds`.
 
