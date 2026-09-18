@@ -384,12 +384,7 @@ export class AdminService {
 }
 
 function optionalTimeLimit(dto: UpdateRoundDto): number | undefined {
-  if (
-    dto.timeLimitSeconds == null &&
-    dto.time_limit_seconds == null &&
-    dto.timeLimitMinutes == null &&
-    dto.time_limit_minutes == null
-  ) {
+  if (dto.timeLimitSeconds == null && dto.time_limit_seconds == null) {
     return undefined;
   }
 

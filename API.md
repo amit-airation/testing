@@ -243,17 +243,15 @@ prisma.round.updateMany({
 | Field | Required | Type | Notes |
 | --- | --- | --- | --- |
 | `name` | yes | string | |
-| `timeLimitSeconds` | one of | int ≥ 1 | Preferred duration field |
+| `timeLimitSeconds` | one of | int ≥ 1 | Duration in seconds |
 | `time_limit_seconds` | alias | int ≥ 1 | |
-| `timeLimitMinutes` | one of | int ≥ 1 | Stored as `minutes * 60` |
-| `time_limit_minutes` | alias | int ≥ 1 | |
 | `status` | no | `draft \| active \| closed` | Default `draft` |
 
 ```bash
 curl -X POST http://localhost:3000/admin/rounds \
   -H "x-api-key: $ADMIN_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Campus Hackathon","timeLimitMinutes":15}'
+  -d '{"name":"Campus Hackathon","timeLimitSeconds":900}'
 ```
 
 **201** `RoundTiming`
@@ -498,7 +496,7 @@ prisma.round.update({
 curl -X PATCH http://localhost:3000/admin/rounds/1 \
   -H "x-api-key: $ADMIN_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Campus Hackathon Finals","timeLimitMinutes":20}'
+  -d '{"name":"Campus Hackathon Finals","timeLimitSeconds":1200}'
 ```
 
 **200** `RoundTiming` (start/stop responses if `status` was sent)
@@ -618,11 +616,11 @@ Job ingest lives in [WEBHOOK.md](./WEBHOOK.md).
 ## Typical flow
 
 ```bash
-# 1. Create a 15-minute draft round
+# 1. Create a 900-second draft round
 curl -X POST http://localhost:3000/admin/rounds \
   -H "x-api-key: $ADMIN_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Campus Hackathon","timeLimitMinutes":15}'
+  -d '{"name":"Campus Hackathon","timeLimitSeconds":900}'
 
 # 2. Register a participant
 curl -X POST http://localhost:3000/admin/rounds/1/participants \

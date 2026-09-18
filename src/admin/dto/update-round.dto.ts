@@ -10,33 +10,25 @@ export class UpdateRoundDto {
   @IsNotEmpty()
   name?: string;
 
-  @ApiPropertyOptional({ minimum: 1, example: 1200 })
+  @ApiPropertyOptional({
+    minimum: 1,
+    example: 1200,
+    description: 'Round duration in seconds.',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
   timeLimitSeconds?: number;
 
-  @ApiPropertyOptional({ minimum: 1, example: 1200, description: 'Alias of timeLimitSeconds.' })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  time_limit_seconds?: number;
-
   @ApiPropertyOptional({
     minimum: 1,
-    example: 20,
-    description: 'Converted to seconds as minutes * 60.',
+    example: 1200,
+    description: 'Alias of timeLimitSeconds.',
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  timeLimitMinutes?: number;
-
-  @ApiPropertyOptional({ minimum: 1, example: 20, description: 'Alias of timeLimitMinutes.' })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  time_limit_minutes?: number;
+  time_limit_seconds?: number;
 
   @ApiPropertyOptional({
     enum: ROUND_STATUSES,

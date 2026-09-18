@@ -23,7 +23,7 @@ export class CreateRoundDto {
     minimum: 1,
     example: 900,
     description:
-      'Round duration in seconds. Required unless a minutes alias is sent.',
+      'Round duration in seconds. Required unless time_limit_seconds is sent.',
   })
   @IsOptional()
   @IsInt()
@@ -39,26 +39,6 @@ export class CreateRoundDto {
   @IsInt()
   @Min(1)
   time_limit_seconds?: number;
-
-  @ApiPropertyOptional({
-    minimum: 1,
-    example: 15,
-    description: 'Round duration in minutes. Converted to seconds as minutes * 60.',
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  timeLimitMinutes?: number;
-
-  @ApiPropertyOptional({
-    minimum: 1,
-    example: 15,
-    description: 'Alias of timeLimitMinutes.',
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  time_limit_minutes?: number;
 
   @ApiPropertyOptional({
     enum: ROUND_STATUSES,
@@ -77,20 +57,11 @@ export class CreateRoundDto {
 export function resolveTimeLimitSeconds(dto: {
   timeLimitSeconds?: number;
   time_limit_seconds?: number;
-  timeLimitMinutes?: number;
-  time_limit_minutes?: number;
 }): number {
   const seconds = dto.timeLimitSeconds ?? dto.time_limit_seconds;
   if (seconds != null) {
     return seconds;
   }
 
-  const minutes = dto.timeLimitMinutes ?? dto.time_limit_minutes;
-  if (minutes != null) {
-    return minutes * 60;
-  }
-
-  throw new BadRequestException(
-    'timeLimitSeconds (or timeLimitMinutes) is required',
-  );
+  throw new BadRequestException('timeLimitSeconds is required');
 }

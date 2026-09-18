@@ -338,8 +338,8 @@
             <input id="round-name" required placeholder="Campus Hackathon" />
             <div class="row">
               <div>
-                <label for="round-minutes">Minutes</label>
-                <input id="round-minutes" type="number" min="1" value="15" required />
+                <label for="round-seconds">Seconds</label>
+                <input id="round-seconds" type="number" min="1" value="900" required />
               </div>
               <div>
                 <label for="round-status">Start as</label>
@@ -471,7 +471,7 @@
           <b>${esc(round.name)}</b>
           <div class="meta">
             <span class="badge ${esc(round.status)}">${esc(round.status)}</span>
-            <span>${round._count?.participants ?? 0} teams · ${Math.round(round.timeLimitSeconds / 60)}m</span>
+            <span>${round._count?.participants ?? 0} teams · ${round.timeLimitSeconds}s</span>
           </div>
         </button>
       `).join("") || `<p class="sub">No rounds yet.</p>`;
@@ -571,7 +571,7 @@
         ${round.expired ? `<span class="badge expired" style="margin-left:6px">expired</span>` : ""}
       `;
       $("live-title").textContent = round.name;
-      $("live-subtitle").textContent = `Round #${round.id} · limit ${Math.round(round.timeLimitSeconds / 60)} min · ranked by publish, then create`;
+      $("live-subtitle").textContent = `Round #${round.id} · limit ${round.timeLimitSeconds}s · ranked by publish, then create`;
       $("clock").textContent = formatClock(round.status === "active" ? round.remainingMs : round.elapsedMs);
       $("live-clock-label").textContent = round.status === "active" ? "remaining" : round.startedAt ? "elapsed" : "not started";
       $("live-actions").innerHTML = round.status === "active"
@@ -700,7 +700,7 @@
           method: "POST",
           body: JSON.stringify({
             name: $("round-name").value.trim(),
-            timeLimitMinutes: Number($("round-minutes").value),
+            timeLimitSeconds: Number($("round-seconds").value),
             status: $("round-status").value,
           }),
         });
