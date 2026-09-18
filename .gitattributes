@@ -1,2 +1,4 @@
 docker-entrypoint.sh text eol=lf
 nginx/*.sh text eol=lf
+nginx/*.conf text eol=lf
+nginx/*.template text eol=lf

@@ -1,6 +1,5 @@
 server {
     listen 80 default_server;
-    listen [::]:80 default_server;
     server_name ${DOMAIN};
 
     location /.well-known/acme-challenge/ {
@@ -9,6 +8,7 @@ server {
 
     location = /nginx-health {
         access_log off;
+        gzip off;
         default_type text/plain;
         return 200 "ok\n";
     }

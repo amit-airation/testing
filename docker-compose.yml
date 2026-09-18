@@ -50,12 +50,13 @@ services:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
     entrypoint: ["/bin/sh", "-c"]
-    command: >
-      trap exit TERM;
-      while :; do
-        certbot renew --webroot -w /var/www/certbot --quiet;
-        sleep 12h & wait $${!};
-      done
+    command:
+      - |
+        trap exit TERM
+        while :; do
+          certbot renew --webroot -w /var/www/certbot --quiet || true
+          sleep 12h & wait $$!
+        done
     restart: unless-stopped
 
   # First TLS cert: point DNS A/AAAA for test.amitverma01.dev at this host, then:
@@ -71,16 +72,17 @@ services:
       DOMAIN: ${DOMAIN:-test.amitverma01.dev}
       CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
     entrypoint: ["/bin/sh", "-c"]
-    command: |
-      set -e
-      EMAIL_ARGS="--register-unsafely-without-email"
-      if [ -n "$$CERTBOT_EMAIL" ]; then
-        EMAIL_ARGS="--email $$CERTBOT_EMAIL"
-      fi
-      certbot certonly --webroot -w /var/www/certbot \
-        -d "$$DOMAIN" \
-        $$EMAIL_ARGS \
-        --agree-tos --no-eff-email
+    command:
+      - |
+        set -e
+        EMAIL_ARGS="--register-unsafely-without-email"
+        if [ -n "$$CERTBOT_EMAIL" ]; then
+          EMAIL_ARGS="--email $$CERTBOT_EMAIL"
+        fi
+        certbot certonly --webroot -w /var/www/certbot \
+          -d "$$DOMAIN" \
+          $$EMAIL_ARGS \
+          --agree-tos --no-eff-email
     depends_on:
       nginx:
         condition: service_healthy
