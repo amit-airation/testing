@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import {
   elapsedSinceStartMs,
@@ -11,12 +12,21 @@ import {
 } from '../round/round-timing.js';
 import { JobWebhookDto } from './dto/job-webhook.dto.js';
 
+export type HandleJobEventOptions = {
+  receivedAt?: Date;
+  queueJobId?: string;
+};
+
 @Injectable()
 export class WebhookService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async handleJobEvent(dto: JobWebhookDto, rawPayload: unknown) {
-    const now = new Date();
+  async handleJobEvent(
+    dto: JobWebhookDto,
+    rawPayload: unknown,
+    options: HandleJobEventOptions = {},
+  ) {
+    const now = options.receivedAt ?? new Date();
 
     return this.prisma.$transaction(async (tx) => {
       const participant = await tx.participant.findFirst({
@@ -58,15 +68,41 @@ export class WebhookService {
         throw new ForbiddenException(`Round ${round.id} has not been started`);
       }
 
-      const webhookEvent = await tx.webhookEvent.create({
-        data: {
-          roundId: round.id,
-          companyId: dto.companyId,
-          jobKey: dto.id,
-          status: dto.status,
-          elapsedMs,
-        },
-      });
+      let webhookEvent =
+        options.queueJobId != null
+          ? await tx.webhookEvent.findUnique({
+              where: { queueJobId: options.queueJobId },
+            })
+          : null;
+
+      if (!webhookEvent) {
+        try {
+          webhookEvent = await tx.webhookEvent.create({
+            data: {
+              roundId: round.id,
+              companyId: dto.companyId,
+              jobKey: dto.id,
+              status: dto.status,
+              elapsedMs,
+              queueJobId: options.queueJobId,
+            },
+          });
+        } catch (error) {
+          if (
+            options.queueJobId != null &&
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2002'
+          ) {
+            webhookEvent = await tx.webhookEvent.findUnique({
+              where: { queueJobId: options.queueJobId },
+            });
+          }
+
+          if (!webhookEvent) {
+            throw error;
+          }
+        }
+      }
 
       const job = await tx.job.upsert({
         where: { jobId: dto.id },

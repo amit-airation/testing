@@ -87,14 +87,15 @@ model Score {
 }
 
 model WebhookEvent {
-  id        Int       @id @default(autoincrement())
-  roundId   Int
-  round     Round     @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  companyId String
-  jobKey    String
-  status    JobStatus
-  elapsedMs Int
-  createdAt DateTime  @default(now())
+  id         Int       @id @default(autoincrement())
+  roundId    Int
+  round      Round     @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  companyId  String
+  jobKey     String
+  status     JobStatus
+  elapsedMs  Int
+  queueJobId String?   @unique
+  createdAt  DateTime  @default(now())
 
   @@index([roundId])
   @@index([companyId])

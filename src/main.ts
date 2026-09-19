@@ -27,6 +27,8 @@ async function bootstrap() {
         '',
         '**Counts:** each job webhook increments that participant `create` or `publish` count. There is no points system.',
         '',
+        '**Webhooks:** `POST /webhooks/jobs` returns **202 Accepted** after enqueueing to Redis/BullMQ. Processing (scores, events) runs asynchronously.',
+        '',
         '**Auth:** Admin routes accept `x-api-key` or `Authorization: Bearer <ADMIN_API_KEY>`. Webhook routes require `Authorization: Bearer <WEBHOOK_SECRET>`.',
         '',
         'Only one round can be `active` at a time. Starting a round closes any other active round.',

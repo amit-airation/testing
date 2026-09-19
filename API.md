@@ -2,7 +2,7 @@
 
 Admin APIs for rounds, participants, leaderboards, and event listing.
 
-Job webhook ingest (`POST /webhooks/jobs`): [WEBHOOK.md](./WEBHOOK.md)
+Job webhook ingest (`POST /webhooks/jobs`, async 202 via Redis/BullMQ): [WEBHOOK.md](./WEBHOOK.md)
 
 Base URL: `https://test.amitverma01.dev` (local: `http://localhost:3000`)
 
@@ -38,7 +38,7 @@ x-api-key: $ADMIN_API_KEY
 Each job webhook increments that participant's **create** or **publish** count. There is no points system.
 
 - Counts come from webhook events in the active round. Create then publish is **1 create and 1 publish**.
-- Job ingest is documented in [WEBHOOK.md](./WEBHOOK.md).
+- Job ingest is documented in [WEBHOOK.md](./WEBHOOK.md). The HTTP endpoint enqueues to Redis/BullMQ and returns **202**; counts appear after the worker commits.
 - Only **one** round can be `active`. Starting a round closes any other active round (`status: closed`, `stoppedAt` set).
 - Leaderboard order: `publishCount` desc, then `createCount` desc, then `lastElapsedMs` asc (faster wins). Missing elapsed time sorts last.
 

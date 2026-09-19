@@ -356,6 +356,31 @@ export class ParticipantWithRoundDto extends ParticipantDto {
   round!: RoundRecordDto;
 }
 
+export class JobWebhookAcceptedDto {
+  @ApiProperty({ example: true })
+  accepted!: boolean;
+
+  @ApiProperty({
+    description: 'BullMQ job id for the enqueued webhook.',
+    example: '1',
+  })
+  jobId!: string;
+
+  @ApiProperty({
+    description: 'Queue name that will process the webhook.',
+    example: 'job-webhooks',
+  })
+  queue!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    description:
+      'When the webhook was accepted. Used for elapsedMs when the worker runs.',
+    example: '2026-09-17T10:04:12.000Z',
+  })
+  receivedAt!: string;
+}
+
 export class JobWebhookResponseDto {
   @ApiProperty({ type: JobDto })
   job!: JobDto;

@@ -6,6 +6,8 @@ Base URL: `https://test.amitverma01.dev` (local: `http://localhost:3000`)
 
 Send a job `create` event when a job is created, and a `publish` event when it is published.
 
+Events are accepted asynchronously: the HTTP handler authenticates and validates the body, enqueues the payload on Redis/BullMQ (`job-webhooks`), and returns **202**. A worker then matches `companyId` to the active round, records the event, upserts the job, and updates scores.
+
 ## Auth
 
 ```http
@@ -49,10 +51,27 @@ Snake_case aliases are accepted:
 
 ## Responses
 
+**202 Accepted**
+
+```json
+{
+  "accepted": true,
+  "jobId": "1",
+  "queue": "job-webhooks",
+  "receivedAt": "2026-09-17T10:04:12.000Z"
+}
+```
+
+| Field | Notes |
+| --- | --- |
+| `jobId` | BullMQ job id (use for ops/debugging) |
+| `queue` | Always `job-webhooks` |
+| `receivedAt` | Timestamp used for `elapsedMs` when the worker runs |
+
 | Status | When |
 | ---: | --- |
-| 201 | Event accepted |
+| 202 | Event accepted and enqueued |
 | 400 | Invalid body |
 | 401 | Missing or invalid bearer token |
-| 403 | No active round, or the round time limit has expired |
-| 404 | `companyId` does not match a participant in the active round |
+
+Participant-not-found and expired-round errors are handled in the worker (failed BullMQ jobs), not as HTTP `404` / `403`.
